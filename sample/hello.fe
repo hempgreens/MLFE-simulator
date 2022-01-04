@@ -1,0 +1,4 @@
+PGM     START
+        OUT     ='HelloWorld', =10
+        RET
+        END

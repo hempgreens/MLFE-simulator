@@ -1,0 +1,226 @@
+PGM     START
+        CALL    MAIN
+        RET
+MAIN    CALL    INIT
+        CALL    EXPR
+        CALL    FIN
+ENDMAIN RET
+
+; int NUMber()
+NUM     RPUSH   1, 6
+        LAD     GR1, 0          ; c
+        LAD     GR2, 0          ; i
+        LAD     GR3, 0          ; j
+        LAD     GR4, 0          ; t
+        LAD     GR5, 0          ; x
+        LAD     GR6, 0          ; r
+; NUMber Upper LooP
+NUMULP  CALL    PEAK            ; c <- peak()
+        LD      GR1, GR0
+        CPA     GR1, =48        ; if c < 48
+        JMI     NUMBLP          ;     then goto bottom_loop
+        CPA     GR1, =58        ; if 58 < c
+        JPL     NUMBLP          ;     then goto bottom_loop
+        PUSH    0, GR1          ; push(c)
+        CALL    NEXT            ; NEXT
+        ADDA    GR2, ONE        ; i = i + 1
+        JUMP    NUMULP          ; continue
+; NUMber Bottom LooP
+NUMBLP  CALL    GETDG           ; t <- get_digit()
+        LD      GR4, GR0
+        POP     GR6             ; r <- pop()
+        SUBA    GR6, =48        ; c <- r - 48
+        LD      GR1, GR6
+        MULA    GR4, GR1        ; t <- c * t
+        ADDA    GR5, GR4        ; x <- x + t
+        ADDA    GR3, ONE        ; j = j + 1
+        CPA     GR3, GR2        ; if j < i
+        JMI     NUMBLP          ;     then continue
+        LD      GR0, GR5        ; return x;
+        RPOP    1, 6
+        RET
+
+; int GETDiGit(GR3)
+GETDG   RPUSH   1, 2
+        LAD     GR1, 1          ; t
+        LD      GR2, GR3        ; n
+        CPA     GR2, ZERO
+        JZE     GETDGED
+; GETDiGitLooP
+GETDGLP MULA    GR1, =10
+        SUBA    GR2, ONE
+        CPA     GR2, ZERO
+        JPL     GETDGLP
+; GETDiGitLooP
+GETDGED LD      GR0, GR1
+        RPOP    1, 2
+        RET
+
+; int PEAK()
+PEAK    RPUSH   1, 2
+        LD      GR1, POS
+        LD      GR2, LEN
+        CPA     GR1, GR2
+        JPL     PEAKOUT
+        LD      GR0, TEXT, GR1
+        JUMP    PEAKED
+PEAKOUT LAD     GR0, -1
+PEAKED  RPOP    1, 2
+        RET
+
+; void NEXT()
+NEXT    PUSH    0, GR1
+        LD      GR1, POS
+        ADDA    GR1, ONE
+        ST      GR1, POS
+        POP     GR1
+        RET
+
+; int EXPR()
+EXPR    RPUSH   1, 2
+        CALL    TERM            ; x <- term()
+        LD      GR1, GR0
+        LAD     GR2, 0          ; c <- 0
+; EXPR LooP
+EXPRLP  CALL    PEAK            ; c = peak()
+        LD      GR2, GR0
+        CPA     GR2, ='+'       ; if c == '+'
+        JZE     EXPRADD         ;     then goto ADD
+        CPA     GR2, ='-'       ; if c == '-'
+        JZE     EXPRSUB         ;     then goto SUB
+        JUMP    EXPRBK          ; break
+; EXPR ADD
+EXPRADD CALL    NEXT            ; next()
+        CALL    TERM            ; x = x + term()
+        ADDA    GR1, GR0
+        JUMP    EXPRLP          ; continue
+; EXPR SUB
+EXPRSUB CALL    NEXT            ; next()
+        CALL    TERM            ; x = x - term()
+        SUBA    GR1, GR0
+        JUMP    EXPRLP          ; continue
+; EXPR loop BreaK
+EXPRBK  LD      GR0, GR1        ; return x
+        RPOP    1, 2
+        RET
+
+; int TERM()
+TERM    RPUSH   1, 2
+        CALL    FACT            ; x <- fact()
+        LD      GR1, GR0
+        LAD     GR2, 0          ; c <- 0
+; TERM LooP
+TERMLP  CALL    PEAK            ; c = peak()
+        LD      GR2, GR0
+        CPA     GR2, ='*'       ; if c == '*'
+        JZE     TERMMUL         ;     then goto MUL
+        CPA     GR2, ='/'       ; if c == '/'
+        JZE     TERMDIV         ;     then goto DIV
+        JUMP    TERMBK          ; break
+; TERM MUL
+TERMMUL CALL    NEXT            ; next()
+        CALL    FACT            ; x = x * fact()
+        MULA    GR1, GR0
+        JUMP    TERMLP          ; continue
+; TERM DIV
+TERMDIV CALL    NEXT            ; next()
+        CALL    FACT            ; x = x / fact()
+        DIVA    GR1, GR0
+        JUMP    TERMLP          ; continue
+; TERM BreaK
+TERMBK  LD      GR0, GR1        ; return x
+        RPOP    1, 2
+        RET
+
+;FACT    RPUSH   1, 2
+;        LAD     GR1, 0      ; x
+;        LAD     GR2, 0      ; peak
+;        CALL    SPACE
+;        CALL    PEAK        ;peak()=='('
+;        LD      GR2, GR0
+;        CPA     GR2, ='('
+;        JNZ     FACTN      ;else
+;FACTL   CALL    NEXT        ;then
+;        CALL    EXPR
+;        LD      GR1, GR0
+;        CALL    PEAK        ;peak==')'
+;        LD      GR2, GR0
+;        CPA     GR2, =')'
+;        JZE     FACTR       ;then
+;        JUMP    FACTED      ;else
+;FACTR   CALL    NEXT
+;        JUMP    FACTED
+;FACTN  CALL    NUM
+;        LD      GR1, GR0
+;FACTED  CALL    SPACE
+;        LD      GR0, GR1
+;        RPOP    1, 2
+;        RET
+
+; int FACT()
+FACT    PUSH    0, GR1
+        LAD     GR1, 0          ; x
+        CALL    SPACE           ; space()
+        CALL    PEAK            ; if peak()!='('
+        CPA     GR0, ='('
+        JNZ     FACTN           ;     then goto NUM
+; FACT Left parenthesis
+FACTL   CALL    NEXT            ; next()
+        CALL    EXPR            ; x = expr()
+        LD      GR1, GR0
+        CALL    PEAK            ; if peak==')'
+        CPA     GR0, =')'
+        JZE     FACTR           ;     then goto Right parenthesis
+        JUMP    FACTED          ;     else goto end
+; FACT Right parenthesis
+FACTR   CALL    NEXT            ; next()
+        JUMP    FACTED          ; goto end
+; FACT Num
+FACTN   CALL    NUM             ; x = number()
+        LD      GR1, GR0
+; FACT EnD
+FACTED  CALL    SPACE           ; space()
+        LD      GR0, GR1        ; return x
+        POP     GR1
+        RET
+
+SPACE   RPUSH   0, 1
+        LAD     GR1, 0          ; r
+        CALL    PEAK            ; if peak() == ' '
+        LD      GR1, GR0
+        CPA     GR1, CSPACE
+        JZE     SPACELP         ;     then goto loop
+        JUMP    SPACEED         ;     else end
+SPACELP CALL    NEXT            ; next()
+        CALL    PEAK            ; if peak() == ' '
+        LD      GR1, GR0
+        CPA     GR1, CSPACE
+        JZE     SPACELP         ;     then goto loop
+SPACEED RPOP    0, 1
+        RET
+
+INIT    RPUSH   1, 2
+        LAD     GR1, TEXT
+        LD      GR2, STR
+        SVC     scanf
+        LAD     GR2, 0
+INITLP  ADDA    GR2, ONE
+        LD      GR1, TEXT, GR2
+        CPA     GR1, ZERO
+        JNZ     INITLP
+        ST      GR2, LEN
+        RPOP    1, 2
+        RET
+
+FIN     LAD     GR1, 1
+        WRITE   GR1, GR0
+        RET
+
+TEXT    DS      256
+POS     DC      0
+LEN     DC      0
+ZERO    DC      0
+ONE     DC      1
+STR     DC      's'
+CSPACE  DC      ' '
+        END

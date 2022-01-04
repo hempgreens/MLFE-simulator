@@ -1,0 +1,366 @@
+PGM     START
+        CALL    MAIN
+        RET
+
+MAIN    RPUSH   1, 3
+        
+        LAD     GR4, 0          ; stdout_char
+        LAD     GR5, '\n'       ; line feed
+        
+        CALL    INIT            ; init()
+MAINLP  WRITE   GR4, GR5
+        CALL    SHOWF           ; show_field()
+MAINIP  CALL    INPUT           ; R = input()
+        CPA     GR0, ZERO       ; if R != 0
+        JNZ     MAINIP          ;     then goto MAINIP
+        
+        LD      GR1, BUFIN      ; X = BUFIN[0]
+        LAD     GR3, 1
+        LD      GR2, BUFIN, GR3 ; Y = BUFIN[1]
+        CALL    GET             ; R = FIELD[Y][X]
+        CPA     GR0, BOMB       ; if R == Bomb
+        JZE     MAINGO          ;     then goto MAIN GameOver
+        
+        CALL    OPEN            ; open()
+        CALL    CHKCLR          ; R = chekCler()
+        CPA     GR0, ZERO       ; if R == 0
+        JZE     MAINGC          ;     then goto MAIN GameClear
+        
+        JUMP    MAINLP          ; continue
+        
+MAINGC  LAD     GR1, 0          ; mode = GameClear
+        JUMP    MAINED          ; goto MAINED
+        
+MAINGO  LAD     GR1, 1          ; mode = GameOver
+        
+MAINED  LAD     GR3, '@'
+        ST      GR3, CBOMB
+        CALL    SHOWF           ; show_field()
+        CALL    RESULT          ; result(mode)
+        RPOP    1, 3
+        RET
+
+INIT    RPUSH   0, 4
+        LAD     GR0, 0          ; ret
+        LAD     GR1, 0          ; L
+        LD      GR2, WIDTH      ; R
+        MULA    GR2, HEIGHT
+        LAD     GR3, 0          ; loop_counter
+        LAD     GR4, 0          ; temp
+        
+INITLP  CPA     GR3, NBOMB
+        JZE     INITED
+        RANDINT
+        LD      GR4, FIELD, GR0 ; T = Memory[FIELD + ret]
+        CPA     GR4, BOMB       ; if T == BOMB
+        JZE     INITLP          ;     then goto INITLP
+        LD      GR4, BOMB       ; T = BOMB
+        ST      GR4, FIELD, GR0 ; FIELD[ret] = T
+        ADDA    GR3, ONE        ; count++
+        JUMP    INITLP          ; continue
+INITED  RPOP    0, 4
+        RET
+
+SHOWF   RPUSH   1, 7
+        LAD     GR1, 0          ; x
+        LAD     GR2, 0          ; y
+        LD      GR3, WIDTH      ; limit_x
+        LD      GR4, HEIGHT     ; limit_y
+        LAD     GR5, 0          ; v
+        
+        LAD     GR6, 0          ; stdout_char
+        LAD     GR7, '\n'       ; line feed
+        
+        
+        OUT     ='012345678\n', =10
+        
+        CPA     GR2, GR4
+        JMI     OUTFORL
+        JUMP    OUTFORE
+OUTFOR  ADDA    GR2, =1
+        CPA     GR2, GR4
+        JMI     OUTFORL
+        JUMP    OUTFORE
+OUTFORL LAD     GR1, 0
+        
+        CPA     GR1, GR3
+        JMI     INFORL
+        JUMP    INFORE
+INFOR   ADDA    GR1, =1
+        
+        CPA     GR1, GR3
+        JMI     INFORL
+        JUMP    INFORE
+INFORL  CALL    GET
+        LD      GR5, GR0
+
+        CPA     GR5, UNCHK      ; if V != Uncheck
+        JNZ     NTUNCK          ;     then goto NTUNCK
+        LD      GR5, CUNCHK     ; V = '#'
+        JUMP    INFORLE         ; goto INFORLE
+
+NTUNCK  CPA     GR5, EMPTY      ; if V != Empty
+        JNZ     NTEMPTY         ;     then goto NTEMPTY
+        CALL    CHKBMB          ; if checkBomb() == 0
+        CPA     GR0, ZERO       ;     then goto EMPTSP
+        JZE     EMPTSP
+        
+        ADDA    GR0, ='0'
+        LD      GR5, GR0
+        
+        JUMP    INFORLE         ; goto INFORLE
+; EMPTy SPace
+EMPTSP  LD      GR5, CEMPTY     ; V = ' '
+        JUMP    INFORLE         ; goto INFORLE
+
+NTEMPTY LD      GR5, CBOMB      ; V = '@'
+        JUMP    INFORLE         ; goto INFORLE
+
+INFORLE WRITE   GR6, GR5        ; print %c, V
+        JUMP    INFOR           ; continue
+
+INFORE  LD      GR5, GR2
+        ADDA    GR5, ='a'
+        WRITE   GR6, GR5
+        
+        WRITE   GR6, GR7
+        
+        JUMP    OUTFOR
+OUTFORE JUMP    SHOWFE
+        
+SHOWFE  RPOP    1, 7
+        RET
+
+INPUT   RPUSH   1, 2
+        LAD     GR0, 0      ; R
+        LAD     GR1, 0      ; B
+        LAD     GR2, 0      ; T
+        
+        OUT     ='[0-8][a-i]> ', =12
+        
+        IN      BUFIN, =2
+        
+        LAD     GR1, BUFIN
+        LD      GR2, 0, GR1
+        SUBA    GR2, ='0'
+        
+        CALL    ISINF
+        
+        CPA     GR0, ZERO
+        JNZ     INFAIL
+        
+        ST      GR2, 0, GR1
+        LD      GR2, 1, GR1
+        SUBA    GR2, ='a'
+        
+        CALL    ISINF
+        CPA     GR0, ZERO
+        JNZ     INFAIL
+        
+        ST      GR2, 1, GR1
+        
+        RPOP    1, 2
+        RET
+
+INFAIL  OUT     ='Plz enter the collect input ', =28
+        LAD     GR0, -1
+        RPOP    1, 2
+        RET
+
+OPEN    RPUSH   1, 3
+        LAD     GR3, 0
+        
+        CALL    ISEXIST
+        
+        CPA     GR0, ZERO
+        JNZ     OPENED
+        
+        CALL    GET             ; R <- Field[y][x]
+        CPA     GR0, UNCHK      ; if R == Uncheck
+        JZE     OPENSE          ;     then goto OPENSE
+        JUMP    OPENED          ;     else goto OPENED
+; OPEN Set Empty
+OPENSE  LD      GR3, EMPTY      ; FIELD[Y][X] = empty
+        CALL    SET
+        CALL    CHKBMB          ; R <- CHKBMB(X, Y)
+        CPA     GR0, ZERO       ; if R != 0
+        JNZ     OPENED          ;     then goto OPENED
+        
+        SUBA    GR1, ONE        ; left up
+        SUBA    GR2, ONE
+        CALL    OPEN
+        ADDA    GR1, ONE        ; up
+        CALL    OPEN
+        ADDA    GR1, ONE        ; right up
+        CALL    OPEN
+        ADDA    GR2, ONE        ; right
+        CALL    OPEN
+        ADDA    GR2, ONE        ; right down
+        CALL    OPEN
+        SUBA    GR1, ONE        ; down
+        CALL    OPEN
+        SUBA    GR1, ONE        ; left down
+        CALL    OPEN
+        SUBA    GR2, ONE        ; left
+        CALL    OPEN
+        
+OPENED  RPOP    1, 3
+        RET
+
+GET     RPUSH   1, 2
+        MULA    GR2, WIDTH
+        ADDA    GR1, GR2
+        LD      GR0, FIELD, GR1
+        RPOP    1, 2
+        RET
+
+SET     RPUSH   1, 2
+        MULA    GR2, WIDTH
+        ADDA    GR1, GR2
+        ST      GR3, FIELD, GR1
+        RPOP    1, 2
+        RET
+
+CHKBMB  RPUSH   1, 4
+        LAD     GR0, 0
+        LAD     GR3, 0
+        LAD     GR4, 8
+        
+        SUBA    GR1, ONE    ; left up
+        SUBA    GR2, ONE
+        RPUSH   1, 2
+        ADDA    GR1, ONE    ; up
+        RPUSH   1, 2
+        ADDA    GR1, ONE    ; right up
+        RPUSH   1, 2
+        ADDA    GR2, ONE    ; right
+        RPUSH   1, 2
+        ADDA    GR2, ONE    ; right down
+        RPUSH   1, 2
+        SUBA    GR1, ONE    ; down
+        RPUSH   1, 2
+        SUBA    GR1, ONE    ; left down
+        RPUSH   1, 2
+        SUBA    GR2, ONE    ; left
+        RPUSH   1, 2
+; Check Bomb LooP
+CBLP    CPA     GR4, ZERO   ; if L == 0
+        JZE     CHKBMBE     ;     then goto End
+        
+        POP     GR2         ; Y = pop()
+        POP     GR1         ; X = pop()
+        
+        CALL    ISEXIST     ; if not isExist(x, y)
+        CPA     GR0, ZERO   ;     then goto CBLPE
+        JNZ     CBLPE
+        
+        CALL    GET         ; R = FIELD[Y][X]
+        
+        CPA     GR0, BOMB   ; if not R == bomb
+        JNZ     CBLPE       ;    then goto CBLPE
+        ADDA    GR3, ONE    ; C += 1
+        
+; Check Bomb LooP End
+CBLPE   SUBA    GR4, ONE    ; L -= 1
+        JUMP    CBLP        ; continue
+        
+; CHecK BoMB End
+CHKBMBE LD      GR0, GR3    ; R = C
+        RPOP    1, 4
+        RET
+
+; ISINField
+ISINF   PUSH    0, GR1
+        LAD     GR1, 0
+        CPA     GR2, GR1
+        JMI     ISINFFL
+        LAD     GR1, 8
+        CPA     GR2, GR1
+        JPL     ISINFFL
+        LAD     GR0, 0
+        POP     GR1
+        RET
+ISINFFL LAD     GR0, -1
+        POP     GR1
+        RET
+
+ISEXIST PUSH    0, GR3
+        LAD     GR3, 8
+        ADDA    GR1, ZERO       ; if x < 0
+        JMI     ISNET           ;     then goto ISNET
+        
+        CPA     GR1, GR3        ; if x > 8
+        JPL     ISNET           ;     then goto ISNET
+        
+        ADDA    GR2, ZERO       ; if y < 0
+        JMI     ISNET           ;     then goto ISNET
+        
+        CPA     GR2, GR3        ; if y > 8
+        JPL     ISNET           ;     then goto ISNET
+        
+        LAD     GR0, 0          ; else r = true
+        POP     GR3
+        RET
+ISNET   LAD     GR0, -1         ; r = false
+        POP     GR3
+        RET
+
+CHKCLR  RPUSH   1, 3
+        LAD     GR0, 0
+        LAD     GR1, 0
+        LD      GR2, WIDTH
+        MULA    GR2, HEIGHT
+        LAD     GR3, 0
+; Check Clear LooP
+CCLP    CPA     GR1, GR2            ; if GR1 == GR2
+        JZE     CHKCLRE             ;     then goto CHKCLRE
+        
+        LD      GR3, FIELD, GR1     ; GR3 = FIELD[GR1]
+        CPA     GR3, UNCHK          ; if GR3 == UNCHK
+        JZE     CCFU                ;     then goto CCFU
+        JUMP    CCLPE               ;     else goto CCLPE
+; Check Clear Find Uncheck
+CCFU    LAD     GR0, -1             ; GR0 = False
+        JUMP    CHKCLRE             ; goto CHKCLRE
+; Check Clear LooP Else
+CCLPE   ADDA    GR1, ONE            ; GR1 += 1
+        JUMP    CCLP                ; continue
+; CHeck CLeaR End
+CHKCLRE RPOP    1, 3
+        RET
+
+RESULT  RPUSH   1, 2
+        CPA     GR1, ZERO       ; if mode == 0
+        JZE     GAMECLR         ;     then goto GAMECLR
+        JUMP    GAMEOVR         ;     else goto GAMEOVR
+GAMECLR LAD     GR1, MSG_GC     ; adr_msg = MSG_GC
+        JUMP    RESULTE         ; goto RESULTE
+GAMEOVR LAD     GR1, MSG_GO     ; adr_msg = MSG_GO
+RESULTE LD      GR2, STRING     ; format = string
+        SVC     printf          ; printf(adr_msg, format)
+        RPOP    1, 2
+        RET
+
+BUFIN   DS      2
+
+WIDTH   DC      9
+HEIGHT  DC      9
+
+FIELD   DS      81
+NBOMB   DC      10
+
+UNCHK   DC      0
+EMPTY   DC      1
+BOMB    DC      2
+CUNCHK  DC      '#'
+CEMPTY  DC      ' '
+CBOMB   DC      '#'
+
+ONE     DC      1
+ZERO    DC      0
+
+STRING  DC      's'
+MSG_GC  DC      '\e[32mCONGRATULATIONS\n\e[0m\0'
+MSG_GO  DC      '\e[31mGAMEOVER\n\e[0m\0'
+
+        END

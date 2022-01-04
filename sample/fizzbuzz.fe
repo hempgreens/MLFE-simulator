@@ -1,0 +1,73 @@
+PGM     START
+FORINIT LD      GR1, ONE        ; counter
+        LD      GR2, LOOPLIM    ; loop_limit
+        LD      GR3, STDOUTD    ; stdout_decimal
+        LAD     GR4, 0          ; selector_mod
+        LD      GR5, STDOUT     ; stdout
+        LD      GR6, LF         ; line feed
+        
+        CPA     GR1, GR2        ; if counter<loop_limit
+        JMI     FORLP           ;       -> FORLP
+        JUMP    FOREND          ; else  -> FOREND
+        
+FOR     ADDA    GR1, =1         ; counter += 1
+        
+        CPA     GR1, GR2        ; if counter<loop_limit
+        JMI     FORLP           ;       -> FORLP
+        JUMP    FOREND          ; else  -> FOREND
+        
+FORLP   LAD     GR4, 15         ; if counter%15 == 0
+        CALL    MOD
+        JZE     OUTFB           ;       -> print FizzBuzz
+        
+        LAD     GR4, 3          ; if counter%3 == 0
+        CALL    MOD
+        JZE     OUTF            ;       -> print Fizz
+        
+        LAD     GR4, 5          ; if counter%5 == 0
+        CALL    MOD
+        JZE     OUTB            ;       -> print Buzz
+        
+        WRITE   GR3, GR1        ; else  -> print counter
+        WRITE   GR5, GR6
+        
+        JUMP    FOR
+FOREND  RET
+
+; MOD(GR1, GR4) -> GR0
+; GR0 MOD result
+; GR1 counter
+; GR2 temp
+; GR4 selector
+MOD     PUSH    0, GR2
+        DIVA    GR2, GR1, GR4
+        MULA    GR2, GR4
+        SUBA    GR2, GR1, GR2
+        LD      GR0, GR2
+        CPA     GR0, ZERO
+        POP     GR2
+        RET
+
+OUTFB   OUT     FB, =8
+        WRITE   GR5, GR6
+        JUMP    FOR
+OUTF    OUT     FB, =4
+        WRITE   GR5, GR6
+        JUMP    FOR
+OUTB    OUT     BZ, =4
+        WRITE   GR5, GR6
+        JUMP    FOR
+
+FB      DC      'Fizz'
+BZ      DC      'Buzz'
+
+LOOPLIM DC      31
+
+ZERO    DC      0
+ONE     DC      1
+STDOUTD DC      1
+
+STDOUT  DC      0
+LF      DC      '\n'
+
+        END
