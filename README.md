@@ -9,7 +9,7 @@
 まずプログラムをローカルにダウンロードしてください。ページから直接ダウンロードしても構いません。
 
 ```
-> git clone hempgreens/MLFE-simulator
+> git clone https://github.com/hempgreens/MLFE-simulator
 ```
 
 Python環境がインストールされているのを前提としています。  
