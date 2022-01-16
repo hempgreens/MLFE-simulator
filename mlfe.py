@@ -772,9 +772,6 @@ def get_label(data):
     return label
 
 def get_decision_data(data, label):
-    global macro_mlfe_path
-    expand_macros = import_module(macro_mlfe_path).expand_macros
-    Macros = import_module(macro_mlfe_path).Macros
     for i, line in enumerate(data):
         if(2 <= len(line) and (line[0] == "SVC" or line[1] == "SVC")):
             continue
