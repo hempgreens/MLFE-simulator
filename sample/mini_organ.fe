@@ -1,0 +1,64 @@
+PGM     START
+        LAD     GR2, 0
+        LAD     GR10, 10
+        LAD     GR11, 11
+        OUT     ='A=ド4 S=レ4 D=ミ4 F=ファ4 G=ソ4 H=ラ4 J=シ4 K=ド5\n', =41
+        OUT     ='ESC = Quit\n', =11
+                
+LOOP    READ    GR10, GR0
+        CPA     GR0, FALSE
+        JZE     LOOP
+        READ    GR11, GR1
+        CPA     GR1, =27
+        JZE     LOOPEND
+        CALL    PERFORM
+        CPA     GR1, =3
+        JUMP    LOOP
+LOOPEND RET
+        
+PERFORM CPA     GR1, =97
+        JZE     playC4
+        CPA     GR1, =115
+        JZE     playD4
+        CPA     GR1, =100
+        JZE     playE4
+        CPA     GR1, =102
+        JZE     playF4
+        CPA     GR1, =103
+        JZE     playG4
+        CPA     GR1, =104
+        JZE     playA4
+        CPA     GR1, =106
+        JZE     playB4
+        CPA     GR1, =107
+        JZE     playC5
+        RET
+playC4  SOUND   TIME, C4, SAMPLE
+        RET
+playD4  SOUND   TIME, D4, SAMPLE
+        RET
+playE4  SOUND   TIME, E4, SAMPLE
+        RET
+playF4  SOUND   TIME, F4, SAMPLE
+        RET
+playG4  SOUND   TIME, G4, SAMPLE
+        RET
+playA4  SOUND   TIME, A4, SAMPLE
+        RET
+playB4  SOUND   TIME, B4, SAMPLE
+        RET
+playC5  SOUND   TIME, C5, SAMPLE
+        RET
+
+TIME    DC      50
+SAMPLE  DC      44100
+C4      DC      262
+D4      DC      294
+E4      DC      329
+F4      DC      349
+G4      DC      392
+A4      DC      440
+B4      DC      494
+C5      DC      523
+FALSE   DC      0
+        END
